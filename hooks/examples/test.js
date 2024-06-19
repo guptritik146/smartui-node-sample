@@ -2,64 +2,58 @@ const webdriver = require("selenium-webdriver");
 const By = webdriver.By;
 var moment = require("moment");
 var waitTime = 2 // 2 seconds
+const fs = require('fs');
 
 // username: Username can be found at automation dashboard
-const USERNAME = process.env.LT_USERNAME || "username";
+const USERNAME = process.env.LT_USERNAME || "ritikvyaparapp";
 
 // AccessKey:  AccessKey can be generated from automation dashboard or profile section
-const KEY = process.env.LT_ACCESS_KEY || "accessKey";
+const KEY = process.env.LT_ACCESS_KEY || "yDyYFFY9yX5X7PLHmj4GEGvWtLGWJf4wTYBHtA67Svyv1YzhMb";
 
-// gridUrl: gridUrl can be found at automation dashboard
-//const GRID_HOST = process.env.GRID_HOST || "@hub.sushobhit.dev.lambdatest.io/wd/hub";    //dev
-const GRID_HOST =
-process.env.GRID_HOST || "@hub.lambdatest.com/wd/hub";    //connect to lambdatest hub
+
+const GRID_HOST = process.env.GRID_HOST || "@hub.lambdatest.com/wd/hub";    //connect to lambdatest hub
+
 
 async function searchTextOnGoogle() {
   var keys = process.argv;
   console.log(keys);
   let parallelCount = keys[2] || 1;
   let tunnel = keys[3] || false;
-  let platform = keys[4] || "Windows 10";
+  let platform = keys[4] || "monterey";
   let browserName = keys[5] || "chrome";
   let version = keys[6] || "latest";
+  // let platform = keys[4] || "android";
+  // let browserName = keys[5] || "safari";
+  // let version = keys[6] || "latest";
 
   // Setup Input capabilities
-  let capabilities = {
+  const capabilities = {
     platform: platform,
+    platformName: platform,
+
     browserName: browserName,
+    "LT:Options": {
+  
     version: version,
     queueTimeout: 300,
     visual: true,
     "user": USERNAME,
+    "resolution": "1920x1080",
     "accessKey": KEY,
-    name: "test session", // name of the test
+    name: "test session-2", // name of the test
     build: platform + browserName + version, // name of the build
-    "smartUI.project": "smartuigithub",
-    // will generate random smartUI build if not specified
-    // "smartUI.build": "first", 
-    "smartUI.options": {
-      "output": {
-        "errorColor": {
-          "red": 200,
-          "green": 0,
-          "blue": 255
-        },
-        "errorType": "movement",
-        "transparency": 0.3,
-        "largeImageThreshold": 100,
-        "useCrossOrigin": false,
-        "outputDiff": true
-      },
-      "scaleToSameSize": true,
-      "ignore": "antialiasing"
-    }
-  };
+    "smartUI.project": "Vyapar_Home_Page",
+    "selenium_version": "4.0.0",
+    idleTimeout: 300,
+    // "w3c": true,
+  }
+};
 
   //add github app capabilities
   let githubURL = process.env.GITHUB_URL
-  if (githubURL){
+  if (githubURL) {
     capabilities.github = {
-      url:githubURL
+      url: githubURL
     }
   }
 
@@ -77,7 +71,6 @@ async function searchTextOnGoogle() {
     startTest(gridUrl, capabilities, "Test " + i);
   }
 }
-
 searchTextOnGoogle();
 
 async function startTest(gridUrl, capabilities, name) {
@@ -94,36 +87,71 @@ async function startTest(gridUrl, capabilities, name) {
   console.log(caps.name, " : Setup Time :", duration.asSeconds());
 
   // navigate to a url
-  let url = "https://www.lambdatest.com";
+  // let url = "https://theobjective.com/espana/?google_preview=G2G9GPtavZgY_PW0rAYw_JHqswaIAYCAgODltu_TvAE&iu=470376764&gdfp_req=1&lineItemId=6393136539&creativeId=138452601793";
+  let url = "https://vyaparapp.in";
+  // let url = "https://www.lambdatest.com/visual-regression-testing";
   console.log(url);
-  await driver
-    .get(url)
-    .then(function () {
-      const session = driver.getSession();
+  try {
+    await driver.get(url);
+    let obj = {
+      screenshotName: 'lambdatest1',
+      fullPage: true,
+      // selectDOM: {
+      //   xpath: ['/html/body/main/section/div[2]/div[1]/div[2]/div[1]/div/div', '/html/body/div[2]/visualmarket-mini-market//section/main'] // Ignoring elements by XPath
+      // },
+    };
+    // const response = await driver.executeScript("smartui.takeScreenshot", obj);
+    let title = await driver.getTitle();
+    setTimeout(async function () {
+      try {
+        const response = await driver.executeScript("smartui.takeScreenshot", obj);
+        waitTime = 5;
 
-      // For Smartui TakeScreenshot
-      setTimeout(function () {
-        console.log("taking screenshot ...")
-        driver.executeScript(`smartui.takeScreenshot,{"screenshotName":"web-page"}`).then(out => {
-          console.log("RESPONSE :", out)
-          return
-        });
-      }, waitTime * 1000);
+        console.log(response);
+        driver.quit();
 
+        // Set the status to passed after taking the screenshot
+        await driver.executeScript("lambda-status=passed");
+      } catch (error) {
+        // Log any errors that occur
+        console.error("Failed to take screenshot:", error);
 
-      driver.getTitle().then(function (title) {
-        setTimeout(function () {
-          driver.executeScript("lambda-status=passed");
-          driver.quit();
-        }, 15000);
-      });
-    })
-    .catch(function (err) {
-      error = JSON.stringify(err);
-      console.log(error);
-      console.log("test failed with reason " + err);
-      driver.executeScript("lambda-status=failed");
-      driver.quit();
-    });
+        // Optionally, set a different status on failure
+        await driver.executeScript("lambda-status=failed");
+      }
+    }, 15000);
+    url = "https://vyaparapp.in";
+    await driver.get(url);
+    obj = {
+      screenshotName: 'lambdatest2',
+      fullPage: true,
+      // selectDOM: {
+      //   xpath: ['/html/body/main/section/div[2]/div[1]/div[2]/div[1]/div/div', '/html/body/div[2]/visualmarket-mini-market//section/main'] // Ignoring elements by XPath
+      // },
+    };
+    setTimeout(async function () {
+      try {
+        const response = await driver.executeScript("smartui.takeScreenshot", obj);
+        waitTime = 5;
+
+        console.log(response);
+        driver.quit();
+
+        // Set the status to passed after taking the screenshot
+        await driver.executeScript("lambda-status=passed");
+      } catch (error) {
+        // Log any errors that occur
+        console.error("Failed to take screenshot:", error);
+
+        // Optionally, set a different status on failure
+        await driver.executeScript("lambda-status=failed");
+      }
+    }, 15000);
+
+  } catch (err) {
+    console.log("test failed with reason", err);
+    await driver.executeScript("lambda-status=failed");
+    driver.quit();
+  }
+
 }
-
